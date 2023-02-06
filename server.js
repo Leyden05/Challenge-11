@@ -1,30 +1,27 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const port = 3001;
+const PORT = process.env.PORT || 3001;
 const notes = require('./db/db.json');
-const uuid = require('./uuid/uuid');
-
-const app = express();
+// const uuid = require('./uuid/uuid');
 
 // middleware POG
+const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // get route for index.html
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname, '/public/index.html'))
-// });
-// get route for notes.html
-app.get('/notes', (req, res) => {
-    res.sendFile(path.join(__dirname, '/public/notes.html'))
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/index.html'))
 });
+// get route for notes.html
 
 // route for database request
 app.get('/api/notes', (req, res) => {
     console.info(`${req.method} has been received and being processed. bop beep boop.`);
-    fs.readFile(`./db/db.json`, `utf-8`, (err, data) => err ? console.log(err) : res.json)
+    fs.readFile(`./db/db.json`, `utf-8`, (err, data) => err ? console.log(err) : res.json(JSON.parse(data)));
 });
 
 app.post('/api/notes', (req, res) => {
@@ -32,13 +29,14 @@ app.post('/api/notes', (req, res) => {
 
 // now we have to destructure... yay! :/
     const { title, text } = req.body;
+    console.log(req.body);
 
     if(title && text) {
         // new note that we shall save into our big box of fun!
         const newNote = {
             title,
             text,
-            note_id: Math.floor((1 + Math.random()) * 0x10000)
+            id: Math.floor((1 + Math.random()) * 0x10000)
               .toString(16)
               .substring(1),
         };
@@ -53,7 +51,7 @@ app.post('/api/notes', (req, res) => {
 
                 fs.writeFile('./db/db.json', JSON.stringify(parsedNotes, null, 4),
                 (writeErr) =>
-                writeErr ? console.error(writeErr) : console.info('Successfully logged note. beep beep boop bop.'));
+                writeErr ? console.error(writeErr) : res.json(parsedNotes))
             };
         });
         
@@ -70,16 +68,21 @@ app.post('/api/notes', (req, res) => {
 });
 
 // delete data functionality yay!! boop beep bop on bop
-app.delete('/api/notes/:noteid', (req, res) => {
+app.delete('/api/notes/:note_id', (req, res) => {
+    console.log(req.params.note_id);
     fs.readFile('./db/db.json', 'utf-8', (err, data) => {
         if (err) {
             console.log(err);
         } else {
             const newerNote = JSON.parse(data)
-            const newData = newerNote.filter(obj => obj.id !== req.params.id)
-            fs.writeFile('./db/db.json', JSON.stringify(newData, null, 4), (err) => err ? console.log(err) : console.log('Successfully deleted data! Beep Boop Bop.'))
+            const newData = newerNote.filter(obj => obj.id !== req.params.note_id)
+            fs.writeFile('./db/db.json', JSON.stringify(newData, null, 4), (err) => err ? console.log(err) : res.json(newData))
         }
     })
+});
+// html route
+app.get('/notes', (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/notes.html'))
 });
 
 // get route pog
@@ -88,8 +91,8 @@ app.get('*', (req, res) =>
 )
 
 
-app.listen(port, () =>
-  console.log(`http://localhost:${port} `)
+app.listen(PORT, () =>
+  console.log(`http://localhost:${PORT} `)
 );
 
 //---------generates a string of random numbers and letters BELOW-----------
