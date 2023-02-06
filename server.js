@@ -1,9 +1,9 @@
 const express = require('express');
-const fs = reqire('fs');
+const fs = require('fs');
 const path = require('path');
-const PORT = 3001;
+const port = 3001;
 const data = require('./db/db.json');
-const uuid = require('./helpers/uuid');
+const uuid = require('./uuid/uuid');
 
 const app = express();
 
@@ -13,16 +13,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // get route for index.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/public/index.html'))
-});
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, '/public/index.html'))
+// });
 // get route for notes.html
 app.get('/notes', (req, res) => {
     res.sendFile(path.join(__dirname, '/public/notes.html'))
 });
 
 // route for database request
-app.get('/api/notes', (res, res) => {
+app.get('/api/notes', (req, res) => {
     console.info(`${req.method} has been received and being processed. bop beep boop.`);
     fs.readFile(`./db/db.json`, `utf-8`, (err, data) => err ? console.log(err) : res.json)
 });
@@ -55,18 +55,40 @@ app.post('/api/notes', (req, res) => {
             };
         });
         
-        const response = {
-            status: 'success',
-            body: newNote,
-        };
-
-        console.log(response);
-        res.status(201).json(response);
-    } else {
-        res.status(500).json('Error. Beep Boop. No new note available');
+    //     const response = {
+    //         status: 'success',
+    //         body: newNote,
+    //     };
+    //     console.log(response);
+    //     res.status(201).json(response);
+    // } else {
+    //     res.status(500).json('Error. Beep Boop. No new note available');
     }
 
 });
+
+// delete data functionality yay!! boop beep bop on bop
+app.delete('/api/notes/:noteid', (req, res) => {
+    fs.readFile('./db/db.json', 'utf-8', (err, data) => {
+        if (err) {
+            console.log(err);
+        } else {
+            const newerNote = JSON.parse(data)
+            const newData = newerNote.filter(obj => obj.id !== req.params.id)
+            fs.writeFile('./db/db.json', JSON.stringify(newData, null, 4), (err) => err ? console.log(err) : console.log('Successfully deleted data! Beep Boop Bop.'))
+        }
+    })
+});
+
+// get route pog
+app.get('*', (req, res) =>
+    res.sendFile(path.join(__dirname, '/public/index.html'))
+)
+
+
+app.listen(port, () =>
+  console.log(`http://localhost:${port} `)
+);
 
 //---------generates a string of random numbers and letters BELOW-----------
 // module.exports = () =>
