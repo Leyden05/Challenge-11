@@ -2,7 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const port = 3001;
-const data = require('./db/db.json');
+const notes = require('./db/db.json');
 const uuid = require('./uuid/uuid');
 
 const app = express();
@@ -33,12 +33,14 @@ app.post('/api/notes', (req, res) => {
 // now we have to destructure... yay! :/
     const { title, text } = req.body;
 
-    if (title && text) {
+    if(title && text) {
         // new note that we shall save into our big box of fun!
         const newNote = {
             title,
             text,
-            note_id: uuid(),
+            note_id: Math.floor((1 + Math.random()) * 0x10000)
+              .toString(16)
+              .substring(1),
         };
 
         fs.readFile('./db/db.json', 'utf-8', (err, data) => {
